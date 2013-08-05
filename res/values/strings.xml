@@ -3,6 +3,7 @@
 
     <string name="app_name">NFCReader</string>
     <string name="action_settings">Settings</string>
-    <string name="hello_world">Hello world!</string>
+    <string name="Message">NFC TEST</string>
+    <string name="Start_Detect">開始讀取NFC Tag</string>
 
 </resources>
