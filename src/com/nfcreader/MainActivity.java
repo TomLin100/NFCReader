@@ -1,17 +1,47 @@
 package com.nfcreader;
 
+import android.nfc.NfcAdapter;
+import android.nfc.NfcManager;
+import android.nfc.Tag;
+import android.nfc.tech.NfcA;
 import android.os.Bundle;
 import android.app.Activity;
+import android.app.PendingIntent;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.view.Menu;
-import android.view.View;
-import android.view.View.OnClickListener;
+import android.widget.TextView;
 
-public class MainActivity extends Activity implements OnClickListener {
-
+@SuppressWarnings("unused")
+public class MainActivity extends Activity {
+	
+	
+	private TextView MessageView;
+	private NfcManager manager;
+	private NfcAdapter adapter;
+	private IntentFilter nfc_tech;
+	private IntentFilter[] nfcFilter;
+	private PendingIntent nfcPendingIntent;
+	private Intent nfc_intent;
+	private String[][] tech_list;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		MessageView = (TextView)findViewById(R.id.MessageTextView);
+		Decration();
+	}
+	
+	private void Decration()
+	{
+		manager = (NfcManager)getSystemService(NFC_SERVICE);
+		adapter = manager.getDefaultAdapter();
+		nfc_intent = new Intent(this,getClass());
+		nfcPendingIntent = PendingIntent.getActivity(this, 0, nfc_intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
+		nfc_tech = new IntentFilter(NfcAdapter.ACTION_TECH_DISCOVERED);
+		nfcFilter = new IntentFilter[]{nfc_tech};
+		tech_list = new String[][]{new String[]{NfcA.class.getName()}};
 	}
 
 	@Override
@@ -22,9 +52,25 @@ public class MainActivity extends Activity implements OnClickListener {
 	}
 
 	@Override
-	public void onClick(View v) {
+	protected void onNewIntent(Intent intent) {
 		// TODO 自動產生的方法 Stub
-		
+		super.onNewIntent(intent);
+		Tag tagFromIntent = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
 	}
 
+	@Override
+	protected void onPause() {
+		// TODO 自動產生的方法 Stub
+		super.onPause();
+		adapter.disableForegroundDispatch(this);
+	}
+
+	@Override
+	protected void onResume() {
+		// TODO 自動產生的方法 Stub
+		super.onResume();
+		adapter.enableForegroundDispatch(this, nfcPendingIntent, nfcFilter, tech_list);
+	}
+	
+	
 }

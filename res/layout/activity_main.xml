@@ -17,10 +17,4 @@
         android:text="@string/Message"
         android:textAppearance="?android:attr/textAppearanceLarge" />
 
-    <Button
-        android:id="@+id/button1"
-        android:layout_width="126dp"
-        android:layout_height="wrap_content"
-        android:text="@string/Start_Detect" />
-
 </LinearLayout>
