@@ -1,20 +1,23 @@
 package com.nfcreader;
 
+import java.io.IOException;
+import java.nio.charset.Charset;
+
 import android.nfc.NfcAdapter;
 import android.nfc.NfcManager;
 import android.nfc.Tag;
+import android.nfc.tech.MifareUltralight;
 import android.nfc.tech.NfcA;
 import android.os.Bundle;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.util.Log;
 import android.view.Menu;
 import android.widget.TextView;
 
-@SuppressWarnings("unused")
 public class MainActivity extends Activity {
-	
 	
 	private TextView MessageView;
 	private NfcManager manager;
@@ -24,6 +27,7 @@ public class MainActivity extends Activity {
 	private PendingIntent nfcPendingIntent;
 	private Intent nfc_intent;
 	private String[][] tech_list;
+    private static final String TAG = MainActivity.class.getSimpleName();
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -42,7 +46,7 @@ public class MainActivity extends Activity {
 		nfc_tech = new IntentFilter(NfcAdapter.ACTION_TECH_DISCOVERED);
 		nfcFilter = new IntentFilter[]{nfc_tech};
 		tech_list = new String[][]{new String[]{NfcA.class.getName()}};
-	}
+	}  
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -56,7 +60,30 @@ public class MainActivity extends Activity {
 		// TODO 自動產生的方法 Stub
 		super.onNewIntent(intent);
 		Tag tagFromIntent = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+		MessageView.setText(readTag(tagFromIntent));
 	}
+	
+	public String readTag(Tag tag) {
+        MifareUltralight mifare = MifareUltralight.get(tag);
+        try {
+            mifare.connect();
+            byte[] payload = mifare.readPages(4);
+            return new String(payload, Charset.forName("US-ASCII"));
+        } catch (IOException e) {
+            Log.e(TAG, "IOException while writing MifareUltralightmessage...", e);
+        } finally {
+            if (mifare != null) {
+               try {
+                   mifare.close();
+               }
+               catch (IOException e) {
+                   Log.e(TAG, "Error closing tag...", e);
+               }
+            }
+        }
+        return null;
+    }
+
 
 	@Override
 	protected void onPause() {
@@ -64,13 +91,11 @@ public class MainActivity extends Activity {
 		super.onPause();
 		adapter.disableForegroundDispatch(this);
 	}
-
+	
 	@Override
 	protected void onResume() {
 		// TODO 自動產生的方法 Stub
 		super.onResume();
 		adapter.enableForegroundDispatch(this, nfcPendingIntent, nfcFilter, tech_list);
-	}
-	
-	
+	}	
 }
