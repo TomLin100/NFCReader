@@ -15,7 +15,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.util.Log;
 import android.view.Menu;
-import android.widget.TextView;
+import android.widget.*;
 
 public class MainActivity extends Activity {
 	
@@ -59,31 +59,28 @@ public class MainActivity extends Activity {
 	protected void onNewIntent(Intent intent) {
 		// TODO 自動產生的方法 Stub
 		super.onNewIntent(intent);
-		Tag tagFromIntent = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
-		MessageView.setText(readTag(tagFromIntent));
+		String action = intent.getAction();
+		if(NfcAdapter.ACTION_TECH_DISCOVERED.equals(action))
+		{
+			Tag tagFromIntent = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+			MessageView.setText(readTag(tagFromIntent));			
+		}
 	}
-	
+
 	public String readTag(Tag tag) {
         MifareUltralight mifare = MifareUltralight.get(tag);
         try {
             mifare.connect();
-            byte[] payload = mifare.readPages(4);
-            return new String(payload, Charset.forName("US-ASCII"));
+            byte[] payload = mifare.readPages(5);
+            
+            return new String(payload,Charset.forName("US-ASCII"));
+            //return payload.toString();
         } catch (IOException e) {
             Log.e(TAG, "IOException while writing MifareUltralightmessage...", e);
-        } finally {
-            if (mifare != null) {
-               try {
-                   mifare.close();
-               }
-               catch (IOException e) {
-                   Log.e(TAG, "Error closing tag...", e);
-               }
-            }
+            return null;
         }
-        return null;
     }
-
+	
 
 	@Override
 	protected void onPause() {
