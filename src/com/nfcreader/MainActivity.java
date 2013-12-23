@@ -57,7 +57,7 @@ public class MainActivity extends Activity {
 
 	@Override
 	protected void onNewIntent(Intent intent) {
-		// TODO 自動產生的方法 Stub
+		// TODO 嚙諛動莎蕭嚙談迎蕭嚙踝蕭k Stub
 		super.onNewIntent(intent);
 		String action = intent.getAction();
 		if(NfcAdapter.ACTION_TECH_DISCOVERED.equals(action))
@@ -71,7 +71,7 @@ public class MainActivity extends Activity {
         MifareUltralight mifare = MifareUltralight.get(tag);
         try {
             mifare.connect();
-            byte[] payload = mifare.readPages(5);
+            byte[] payload = mifare.readPages(2);
             
             return new String(payload,Charset.forName("US-ASCII"));
             //return payload.toString();
@@ -84,14 +84,14 @@ public class MainActivity extends Activity {
 
 	@Override
 	protected void onPause() {
-		// TODO 自動產生的方法 Stub
+		// TODO 嚙諛動莎蕭嚙談迎蕭嚙踝蕭k Stub
 		super.onPause();
 		adapter.disableForegroundDispatch(this);
 	}
 	
 	@Override
 	protected void onResume() {
-		// TODO 自動產生的方法 Stub
+		// TODO 嚙諛動莎蕭嚙談迎蕭嚙踝蕭k Stub
 		super.onResume();
 		adapter.enableForegroundDispatch(this, nfcPendingIntent, nfcFilter, tech_list);
 	}	
