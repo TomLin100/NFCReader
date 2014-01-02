@@ -3,16 +3,20 @@ package com.nfcreader;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
+import android.nfc.NdefMessage;
+import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
 import android.nfc.NfcManager;
 import android.nfc.Tag;
 import android.nfc.tech.MifareUltralight;
 import android.nfc.tech.NfcA;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.IntentFilter.MalformedMimeTypeException;
 import android.util.Log;
 import android.view.Menu;
 import android.widget.*;
@@ -43,7 +47,10 @@ public class MainActivity extends Activity {
 		adapter = manager.getDefaultAdapter();
 		nfc_intent = new Intent(this,getClass());
 		nfcPendingIntent = PendingIntent.getActivity(this, 0, nfc_intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
-		nfc_tech = new IntentFilter(NfcAdapter.ACTION_TECH_DISCOVERED);
+		nfc_tech = new IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED);
+		try {
+			nfc_tech.addDataType("text/plain");
+		} catch (MalformedMimeTypeException e) { }
 		nfcFilter = new IntentFilter[]{nfc_tech};
 		tech_list = new String[][]{new String[]{NfcA.class.getName()}};
 	}  
@@ -57,42 +64,69 @@ public class MainActivity extends Activity {
 
 	@Override
 	protected void onNewIntent(Intent intent) {
-		// TODO �۰ʲ��ͪ���k Stub
 		super.onNewIntent(intent);
 		String action = intent.getAction();
-		if(NfcAdapter.ACTION_TECH_DISCOVERED.equals(action))
+		if(NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action))
 		{
-			Tag tagFromIntent = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
-			MessageView.setText(readTag(tagFromIntent));			
+			NdefMessage[] msg = getNdefMessages(intent);
+			String str1 = new String(msg[0].getRecords()[0].getPayload());
+			MessageView.setText(str1);
 		}
 	}
-
-	public String readTag(Tag tag) {
-        MifareUltralight mifare = MifareUltralight.get(tag);
-        try {
-            mifare.connect();
-            byte[] payload = mifare.readPages(2);
-            
-            return new String(payload,Charset.forName("US-ASCII"));
-            //return payload.toString();
-        } catch (IOException e) {
-            Log.e(TAG, "IOException while writing MifareUltralightmessage...", e);
-            return null;
-        }
-    }
 	
 
 	@Override
 	protected void onPause() {
-		// TODO �۰ʲ��ͪ���k Stub
 		super.onPause();
 		adapter.disableForegroundDispatch(this);
 	}
 	
 	@Override
 	protected void onResume() {
-		// TODO �۰ʲ��ͪ���k Stub
 		super.onResume();
+		// 處理由Android系統送出應用程式處理的intent filter內容
+	    if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(getIntent().getAction())) {
+	        // 取得NdefMessage
+	        NdefMessage[] messages = getNdefMessages(getIntent());
+	        // 取得實際的內容
+	        byte[] payload = messages[0].getRecords()[0].getPayload();
+	        // 往下送出該intent給其他的處理對象
+	        setIntent(new Intent()); 
+	    }
 		adapter.enableForegroundDispatch(this, nfcPendingIntent, nfcFilter, tech_list);
-	}	
+	}
+	
+	NdefMessage[] getNdefMessages(Intent intent) {
+	    // Parse the intent
+	    NdefMessage[] msgs = null;
+	    String action = intent.getAction();
+	    // 識別目前的action為何
+	    if (NfcAdapter.ACTION_TAG_DISCOVERED.equals(action)
+	            || NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)) {
+	        // 取得parcelabelarrry的資料
+	        Parcelable[] rawMsgs = 
+	            intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
+	        // 取出的內容如果不為null，將parcelable轉成ndefmessage
+	        if (rawMsgs != null) {
+	            msgs = new NdefMessage[rawMsgs.length];
+	            for (int i = 0; i < rawMsgs.length; i++) {
+	                msgs[i] = (NdefMessage) rawMsgs[i];
+	            }
+	        } else {
+	            // Unknown tag type
+	            byte[] empty = new byte[] {};
+	            NdefRecord record = new NdefRecord(NdefRecord.TNF_UNKNOWN, empty, empty, empty);
+	            NdefMessage msg = new NdefMessage(new NdefRecord[] {
+	                record
+	            });
+	            msgs = new NdefMessage[] {
+	                msg
+	            };
+	        }
+	    } else {
+	        Log.d(TAG, "Unknown intent.");
+	        finish();
+	    }
+	    return msgs;
+	}
 }
